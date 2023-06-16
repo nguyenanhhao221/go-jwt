@@ -62,10 +62,6 @@ func (s *APIServer) Run() {
 
 }
 
-type ApiError struct {
-	Error string `json:"error"`
-}
-
 func WriteJSON(w http.ResponseWriter, statusCode int, payload interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
@@ -77,6 +73,9 @@ func WriteJSON(w http.ResponseWriter, statusCode int, payload interface{}) {
 }
 
 func WriteErrorJson(w http.ResponseWriter, statusCode int, msg string) {
+	type ApiError struct {
+		Error string `json:"error"`
+	}
 	WriteJSON(w, statusCode, ApiError{Error: msg})
 }
 
