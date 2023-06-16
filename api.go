@@ -62,7 +62,9 @@ func (s *APIServer) Run() {
 }
 func (s *APIServer) handlerReadiness(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
-	w.Write([]byte("Ready"))
+	if _, err := w.Write([]byte("Ready")); err != nil {
+		log.Printf("Error: Filed to write response handlerReadiness %v ", err)
+	}
 }
 
 func (s *APIServer) handleAccount(w http.ResponseWriter, r *http.Request) error {
