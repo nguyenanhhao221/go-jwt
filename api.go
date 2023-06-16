@@ -43,7 +43,6 @@ func (s *APIServer) Run() {
 	v1Router := chi.NewRouter()
 
 	// mount the v1Router to the /v1 route
-	// so if we access /v1/healthz the handlerReadiness will be called
 	router.Mount("/v1", v1Router)
 
 	//Handlers
