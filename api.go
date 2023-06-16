@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 
@@ -60,11 +61,30 @@ func (s *APIServer) Run() {
 	}
 
 }
-func (s *APIServer) handlerReadiness(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(200)
-	if _, err := w.Write([]byte("Ready")); err != nil {
-		log.Printf("Error: Filed to write response handlerReadiness %v ", err)
+
+type ApiError struct {
+	Error string `json:"error"`
+}
+
+func WriteJSON(w http.ResponseWriter, statusCode int, payload interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	err := json.NewEncoder(w).Encode(payload)
+	if err != nil {
+		log.Printf("Error: failed to encode the payload %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
 	}
+}
+
+func WriteErrorJson(w http.ResponseWriter, statusCode int, msg string) {
+	WriteJSON(w, statusCode, ApiError{Error: msg})
+}
+
+func (s *APIServer) handlerReadiness(w http.ResponseWriter, r *http.Request) {
+	type Ready struct {
+		Status string `json:"status"`
+	}
+	WriteJSON(w, http.StatusOK, Ready{Status: "alive"})
 }
 
 func (s *APIServer) handleAccount(w http.ResponseWriter, r *http.Request) error {
