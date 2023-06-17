@@ -48,6 +48,7 @@ func (s *APIServer) Run() {
 
 	//Handlers
 	v1Router.Get("/health", s.handlerReadiness)
+	v1Router.Get("/account", s.handleAccount)
 
 	//Start the server
 	server := &http.Server{
@@ -86,20 +87,31 @@ func (s *APIServer) handlerReadiness(w http.ResponseWriter, r *http.Request) {
 	WriteJSON(w, http.StatusOK, Ready{Status: "alive"})
 }
 
-func (s *APIServer) handleAccount(w http.ResponseWriter, r *http.Request) error {
-	return nil
+func (s *APIServer) handleAccount(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		s.handleGetAccount(w, r)
+		return
+
+	} else if r.Method == "POST" {
+		s.handleCreateAccount(w, r)
+		return
+	} else if r.Method == "DELETE" {
+		s.handleDeleteAccount(w, r)
+		return
+	}
+
+	w.WriteHeader(http.StatusMethodNotAllowed)
 }
 
-func (s *APIServer) handleGetAccount(w http.ResponseWriter, r *http.Request) error {
-	return nil
+func (s *APIServer) handleGetAccount(w http.ResponseWriter, r *http.Request) {
+	account := NewAccount("Hao", "Nguyen")
+	WriteJSON(w, http.StatusFound, account)
 }
 
-func (s *APIServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) error {
-	return nil
+func (s *APIServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) {
 }
 
-func (s *APIServer) handleDeleteAccount(w http.ResponseWriter, r *http.Request) error {
-	return nil
+func (s *APIServer) handleDeleteAccount(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *APIServer) handleTransfer(w http.ResponseWriter, r *http.Request) error {
