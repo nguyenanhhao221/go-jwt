@@ -21,3 +21,5 @@
 go.work
 vendor
 go-jwt
+.DS_Store
+.env
