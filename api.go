@@ -48,7 +48,7 @@ func (s *APIServer) Run() {
 
 	//Handlers
 	v1Router.Get("/health", s.handlerReadiness)
-	v1Router.Get("/account", s.handleAccount)
+	v1Router.Get("/account/{accountId}", s.handleAccount)
 
 	//Start the server
 	server := &http.Server{
@@ -104,7 +104,10 @@ func (s *APIServer) handleAccount(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *APIServer) handleGetAccount(w http.ResponseWriter, r *http.Request) {
+	accountId := chi.URLParam(r, "accountId")
+	log.Println(accountId)
 	account := NewAccount("Hao", "Nguyen")
+
 	WriteJSON(w, http.StatusFound, account)
 }
 
