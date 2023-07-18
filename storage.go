@@ -10,6 +10,13 @@ import (
 	_ "github.com/lib/pq"
 )
 
+type Storage interface {
+	CreateAccount(*Account) error
+	// DeleteAccount(int) error
+	// UpdateAccount(*Account) error
+	// GetAccountById(int) (*Account, error)
+}
+
 type PostgresStore struct {
 	db *sql.DB
 }
@@ -45,4 +52,8 @@ func NewPostgresStore() (*PostgresStore, error) {
 	return &PostgresStore{
 		db: sqlConnection,
 	}, nil
+}
+
+func (s *PostgresStore) CreateAccount(*Account) error {
+	return nil
 }

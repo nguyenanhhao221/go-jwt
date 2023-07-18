@@ -5,11 +5,11 @@ import (
 )
 
 func main() {
-	sqlConnection, err := NewPostgresStore()
+	store, err := NewPostgresStore()
 	if err != nil {
 		log.Fatalf("Failed to get Postgres sql connection %v", err)
 	}
 
-	apiSrv := NewAPIServer("8080")
+	apiSrv := NewAPIServer("8080", store)
 	apiSrv.Run()
 }

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"log"
 	"net/http"
 
@@ -12,16 +11,17 @@ import (
 
 type APIServer struct {
 	listenAdd string
+	store     Storage
 }
 
-func NewAPIServer(listenAdd string) *APIServer {
+func NewAPIServer(listenAdd string, store Storage) *APIServer {
 	return &APIServer{
 		listenAdd: listenAdd,
+		store:     store,
 	}
 }
 
 func (s *APIServer) Run() {
-
 	// start a router
 	router := chi.NewRouter()
 
@@ -46,11 +46,11 @@ func (s *APIServer) Run() {
 	// mount the v1Router to the /v1 route
 	router.Mount("/v1", v1Router)
 
-	//Handlers
+	// Handlers
 	v1Router.Get("/health", s.handlerReadiness)
 	v1Router.Get("/account/{accountId}", s.handleAccount)
 
-	//Start the server
+	// Start the server
 	server := &http.Server{
 		Addr:    ":" + s.listenAdd,
 		Handler: router,
@@ -60,24 +60,6 @@ func (s *APIServer) Run() {
 	if serverErr != nil {
 		log.Fatalf("Error: Failed to start server %v", serverErr)
 	}
-
-}
-
-func WriteJSON(w http.ResponseWriter, statusCode int, payload interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(statusCode)
-	err := json.NewEncoder(w).Encode(payload)
-	if err != nil {
-		log.Printf("Error: failed to encode the payload %v", err)
-		w.WriteHeader(http.StatusInternalServerError)
-	}
-}
-
-func WriteErrorJson(w http.ResponseWriter, statusCode int, msg string) {
-	type ApiError struct {
-		Error string `json:"error"`
-	}
-	WriteJSON(w, statusCode, ApiError{Error: msg})
 }
 
 func (s *APIServer) handlerReadiness(w http.ResponseWriter, r *http.Request) {
