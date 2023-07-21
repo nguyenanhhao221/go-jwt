@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 
@@ -50,6 +51,7 @@ func (s *APIServer) Run() {
 	// Handlers
 	v1Router.Get(settings.AppSettings.Check_Health, s.handlerReadiness)
 	v1Router.Get(settings.AppSettings.Account_Route, s.handleAccount)
+	v1Router.Post(settings.AppSettings.Create_Account_Route, s.handleCreateAccount)
 
 	// Start the server
 	server := &http.Server{
@@ -74,13 +76,8 @@ func (s *APIServer) handleAccount(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		s.handleGetAccount(w, r)
 		return
-
-	} else if r.Method == "POST" {
-		s.handleCreateAccount(w, r)
-		return
 	} else if r.Method == "DELETE" {
 		s.handleDeleteAccount(w, r)
-		return
 	}
 
 	w.WriteHeader(http.StatusMethodNotAllowed)
@@ -94,7 +91,14 @@ func (s *APIServer) handleGetAccount(w http.ResponseWriter, r *http.Request) {
 	WriteJSON(w, http.StatusFound, account)
 }
 
+// handleCreateAccount create a new account with first name and last name from client's post request
 func (s *APIServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) {
+	createAccountReq := new(CreateAccountRequest)
+	if err := json.NewDecoder(r.Body).Decode(createAccountReq); err != nil {
+		WriteErrorJson(w, http.StatusBadRequest, err.Error())
+	}
+	newAccount := NewAccount(createAccountReq.FirstName, createAccountReq.LastName)
+	WriteJSON(w, http.StatusCreated, newAccount)
 }
 
 func (s *APIServer) handleDeleteAccount(w http.ResponseWriter, r *http.Request) {
