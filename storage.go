@@ -11,6 +11,7 @@ import (
 )
 
 type Storage interface {
+	createAccountTable() error
 	CreateAccount(*Account) error
 	// DeleteAccount(int) error
 	// UpdateAccount(*Account) error
@@ -52,6 +53,23 @@ func NewPostgresStore() (*PostgresStore, error) {
 	return &PostgresStore{
 		db: sqlConnection,
 	}, nil
+}
+
+func (s *PostgresStore) Init() error {
+	return s.createAccountTable()
+}
+
+func (s *PostgresStore) createAccountTable() error {
+	query := `CREATE TABLE IF NOT EXISTS ACCOUNT (
+	id UUID PRIMARY KEY UNIQUE,
+	first_name VARCHAR(50),
+	last_name VARCHAR(50),
+	number SERIAL,
+	balance SERIAL,
+	created_at TIMESTAMP
+	)`
+	_, err := s.db.Exec(query)
+	return err
 }
 
 func (s *PostgresStore) CreateAccount(*Account) error {
