@@ -1,19 +1,21 @@
 package settings
 
 type Settings struct {
-	PORT          int
-	API_V1        string
-	Check_Health  string
-	Account_Route string
+	PORT                 int
+	API_V1               string
+	Check_Health         string
+	Account_Route        string
+	Create_Account_Route string
 }
 
 var AppSettings *Settings
 
 func init() {
 	AppSettings = &Settings{
-		PORT:   8080,
-		API_V1: "/v1",
+		PORT:                 8080,
+		API_V1:               "/v1",
+		Check_Health:         "/health",
+		Account_Route:        "/account/{accountId}",
+		Create_Account_Route: "/account/create",
 	}
-	AppSettings.Check_Health = AppSettings.API_V1 + "/health"
-	AppSettings.Account_Route = AppSettings.API_V1 + "/account/{accountId}"
 }
