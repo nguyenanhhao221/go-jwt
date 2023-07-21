@@ -7,6 +7,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/nguyenanhhao221/go-jwt/settings"
 )
 
 type APIServer struct {
@@ -44,18 +45,18 @@ func (s *APIServer) Run() {
 	v1Router := chi.NewRouter()
 
 	// mount the v1Router to the /v1 route
-	router.Mount("/v1", v1Router)
+	router.Mount(settings.AppSettings.API_V1, v1Router)
 
 	// Handlers
-	v1Router.Get("/health", s.handlerReadiness)
-	v1Router.Get("/account/{accountId}", s.handleAccount)
+	v1Router.Get(settings.AppSettings.Check_Health, s.handlerReadiness)
+	v1Router.Get(settings.AppSettings.Account_Route, s.handleAccount)
 
 	// Start the server
 	server := &http.Server{
 		Addr:    ":" + s.listenAdd,
 		Handler: router,
 	}
-	log.Printf("Server is listening on %v", s.listenAdd)
+	log.Printf("Server is listening on port %v", s.listenAdd)
 	serverErr := server.ListenAndServe()
 	if serverErr != nil {
 		log.Fatalf("Error: Failed to start server %v", serverErr)
