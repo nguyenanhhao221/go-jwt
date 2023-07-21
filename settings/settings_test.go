@@ -3,6 +3,12 @@ package settings
 import "testing"
 
 func TestAppSettings(t *testing.T) {
+	// PORT
+	expectedPort := 8080
+	if AppSettings.PORT != expectedPort {
+		t.Errorf("Expected PORT to be %v, but got %v", expectedPort, AppSettings.PORT)
+	}
+	// Api Route settings
 	expectedAPIV1 := "/v1"
 
 	if AppSettings.API_V1 != expectedAPIV1 {
