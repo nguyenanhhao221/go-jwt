@@ -31,16 +31,8 @@ jobs:
           sort_keys: false
 
       - name: Set up Docker Compose
-        env:
-          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          PGADMIN_DEFAULT_EMAIL: ${{ secrets.PGADMIN_DEFAULT_EMAIL }}
-          PGADMIN_DEFAULT_PASSWORD: ${{ secrets.PGADMIN_DEFAULT_PASSWORD }}
         run: docker-compose -f docker-compose.yaml up
 
-      # If your application needs to wait for PostgreSQL to be ready before running tests, use a helper script to wait for the database to be available.
-      - name: Wait for PostgreSQL to be ready
-        run: docker-compose run --rm wait-for-postgres
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
