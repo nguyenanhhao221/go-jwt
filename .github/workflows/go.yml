@@ -1,5 +1,6 @@
 # This workflow will build a golang project
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 
 name: Go
 
@@ -9,22 +10,32 @@ on:
     branches: [ "main" ]
 
 jobs:
-
-  build:
+  # Label of the container job
+  test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+      # Downloads a copy of the code in your repository before running CI tests
+      - name: Check out repository code
+        uses: actions/checkout@v3
 
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.20'
-    
-    - name: Install dependencies
-      run: go get .
-      
-    - name: Build
-      run: make run
+      - name: Set up Docker Compose
+        env:
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          PGADMIN_DEFAULT_EMAIL: ${{ secrets.PGADMIN_DEFAULT_EMAIL }}
+          PGADMIN_DEFAULT_PASSWORD: ${{ secrets.PGADMIN_DEFAULT_PASSWORD }}
+        run: docker-compose -f docker-compose.yaml up
 
-    - name: Test
-      run: make test
+      # If your application needs to wait for PostgreSQL to be ready before running tests, use a helper script to wait for the database to be available.
+      - name: Wait for PostgreSQL to be ready
+        run: docker-compose run --rm wait-for-postgres
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: '1.20'
+
+      - name: Install dependencies
+        run: go get .
+
+      - name: Test
+        run: make test
