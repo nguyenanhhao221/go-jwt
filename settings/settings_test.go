@@ -16,7 +16,7 @@ func TestAppSettings(t *testing.T) {
 	}
 
 	// Test Check_Health
-	expectedCheckHealth := "/v1/health"
+	expectedCheckHealth := "/health"
 	if AppSettings.Check_Health != expectedCheckHealth {
 		t.Errorf("Expected Check_Health to be %s, but got %s", expectedCheckHealth, AppSettings.Check_Health)
 	}
