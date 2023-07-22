@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/google/uuid"
 	"github.com/nguyenanhhao221/go-jwt/settings"
 )
 
@@ -98,7 +99,16 @@ func (s *APIServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) 
 		WriteErrorJson(w, http.StatusBadRequest, err.Error())
 	}
 	newAccount := NewAccount(createAccountReq.FirstName, createAccountReq.LastName)
-	WriteJSON(w, http.StatusCreated, newAccount)
+	if id, err := s.store.CreateAccount(newAccount); err != nil {
+		WriteErrorJson(w, http.StatusBadRequest, err.Error())
+	} else {
+		type createAccountRes struct {
+			ID uuid.UUID `json:"id"`
+		}
+		WriteJSON(w, http.StatusCreated, &createAccountRes{
+			ID: id,
+		})
+	}
 }
 
 func (s *APIServer) handleDeleteAccount(w http.ResponseWriter, r *http.Request) {

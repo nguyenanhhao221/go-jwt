@@ -6,13 +6,14 @@ import (
 	"log"
 	"os"
 
+	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
 type Storage interface {
 	createAccountTable() error
-	CreateAccount(*Account) error
+	CreateAccount(*Account) (uuid.UUID, error)
 	// DeleteAccount(int) error
 	// UpdateAccount(*Account) error
 	// GetAccountById(int) (*Account, error)
@@ -60,8 +61,10 @@ func (s *PostgresStore) Init() error {
 }
 
 func (s *PostgresStore) createAccountTable() error {
-	query := `CREATE TABLE IF NOT EXISTS ACCOUNT (
-	id UUID PRIMARY KEY UNIQUE,
+	query := `
+	CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+	CREATE TABLE IF NOT EXISTS ACCOUNT (
+	id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
 	first_name VARCHAR(50),
 	last_name VARCHAR(50),
 	number SERIAL,
@@ -72,6 +75,23 @@ func (s *PostgresStore) createAccountTable() error {
 	return err
 }
 
-func (s *PostgresStore) CreateAccount(*Account) error {
-	return nil
+func (s *PostgresStore) CreateAccount(newAccount *Account) (uuid.UUID, error) {
+	query := `
+	INSERT INTO ACCOUNT (first_name, last_name, number, balance, created_at)
+	VALUES ($1, $2, $3, $4, $5)
+	RETURNING ID
+	`
+
+	var id uuid.UUID
+	err := s.db.QueryRow(
+		query,
+		newAccount.FirstName,
+		newAccount.LastName,
+		newAccount.Number,
+		newAccount.Balance,
+		newAccount.CreatedAt).Scan(&id)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	return id, nil
 }
