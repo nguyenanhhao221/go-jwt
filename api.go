@@ -85,11 +85,15 @@ func (s *APIServer) handleAccount(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *APIServer) handleGetAccount(w http.ResponseWriter, r *http.Request) {
-	accountId := chi.URLParam(r, "accountId")
-	log.Println(accountId)
-	account := NewAccount("Hao", "Nguyen")
-
-	WriteJSON(w, http.StatusFound, account)
+	accountId, err := uuid.Parse(chi.URLParam(r, "accountId"))
+	if err != nil {
+		WriteErrorJson(w, http.StatusBadRequest, err.Error())
+	}
+	if account, err := s.store.GetAccountById(accountId); err != nil {
+		WriteErrorJson(w, http.StatusNotFound, err.Error())
+	} else {
+		WriteJSON(w, http.StatusFound, account)
+	}
 }
 
 // handleCreateAccount create a new account with first name and last name from client's post request

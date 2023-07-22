@@ -14,9 +14,9 @@ import (
 type Storage interface {
 	createAccountTable() error
 	CreateAccount(*Account) (uuid.UUID, error)
+	GetAccountById(accountId uuid.UUID) (*Account, error)
 	// DeleteAccount(int) error
 	// UpdateAccount(*Account) error
-	// GetAccountById(int) (*Account, error)
 }
 
 type PostgresStore struct {
@@ -73,6 +73,28 @@ func (s *PostgresStore) createAccountTable() error {
 	)`
 	_, err := s.db.Exec(query)
 	return err
+}
+
+func (s *PostgresStore) GetAccountById(accountId uuid.UUID) (*Account, error) {
+	query := `
+	SELECT *
+	FROM account
+	WHERE id = $1 
+	`
+	var account Account
+	row := s.db.QueryRow(query, accountId)
+	err := row.Scan(
+		&account.ID,
+		&account.FirstName,
+		&account.LastName,
+		&account.Number,
+		&account.Balance,
+		&account.CreatedAt,
+	)
+	if err != nil {
+		return &account, err
+	}
+	return &account, nil
 }
 
 func (s *PostgresStore) CreateAccount(newAccount *Account) (uuid.UUID, error) {
