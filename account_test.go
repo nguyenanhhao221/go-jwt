@@ -16,42 +16,61 @@ func isValidUUID(id string) bool {
 	return err == nil
 }
 
-func TestCreateAccount(t *testing.T) {
+func TestAccount(t *testing.T) {
 	store, err := NewPostgresStore()
 	if err != nil {
 		t.Fatal(err)
 	}
 	server := &APIServer{store: store}
-
-	createcAccReqBody := &CreateAccountRequest{FirstName: "Test User First Name", LastName: "Test User Last Name"}
-	reqBodyJSON, err := json.Marshal(createcAccReqBody)
-	if err != nil {
-		t.Fatalf("Error failed json serialized request body %v", err)
-	}
-
-	req, err := http.NewRequest("POST", settings.AppSettings.Create_Account_Route, bytes.NewBuffer(reqBodyJSON))
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(server.handleCreateAccount)
-
-	handler.ServeHTTP(rr, req)
-
-	if rr.Code != http.StatusCreated {
-		t.Errorf("expected status code %d but got %d", http.StatusCreated, rr.Code)
-	}
-
-	var response struct {
+	var createAccountResponse struct {
 		ID string `json:"id"`
 	}
-	if err := json.Unmarshal(rr.Body.Bytes(), &response); err != nil {
-		t.Errorf("failed to unmarshal response body, the id must be uuid type: %s", err)
-	}
+	t.Run("CreateAccount", func(t *testing.T) {
+		createcAccReqBody := &CreateAccountRequest{FirstName: "Test User First Name", LastName: "Test User Last Name"}
+		reqBodyJSON, err := json.Marshal(createcAccReqBody)
+		if err != nil {
+			t.Fatalf("Error failed json serialized request body %v", err)
+		}
 
-	expectIdToBeUUID := true
-	if expectIdToBeUUID != isValidUUID(response.ID) {
-		t.Errorf("the id return must be an uuid. Current id: %s", response.ID)
-	}
+		req, err := http.NewRequest("POST", settings.AppSettings.Create_Account_Route, bytes.NewBuffer(reqBodyJSON))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		handler := http.HandlerFunc(server.handleCreateAccount)
+		rr := httptest.NewRecorder()
+
+		handler.ServeHTTP(rr, req)
+
+		if rr.Code != http.StatusCreated {
+			t.Errorf("expected status code %d but got %d", http.StatusCreated, rr.Code)
+		}
+
+		if err := json.Unmarshal(rr.Body.Bytes(), &createAccountResponse); err != nil {
+			t.Errorf("failed to unmarshal response body, the id must be uuid type: %s", err)
+		}
+
+		expectIdToBeUUID := true
+		if expectIdToBeUUID != isValidUUID(createAccountResponse.ID) {
+			t.Errorf("the id return must be an uuid. Current id: %s", createAccountResponse.ID)
+		}
+	})
+
+	t.Run("GetAccount", func(t *testing.T) {
+		accountId := createAccountResponse.ID
+		req, err := http.NewRequest("GET", "v1/account/"+accountId, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		handler := http.HandlerFunc(server.handleAccount)
+
+		rr := httptest.NewRecorder()
+		handler.ServeHTTP(rr, req)
+
+		expectHttpStatus := http.StatusFound
+		if rr.Code != expectHttpStatus {
+			t.Errorf("expected status code %d but got %d", expectHttpStatus, rr.Code)
+		}
+	})
 }

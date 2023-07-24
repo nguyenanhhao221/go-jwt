@@ -74,8 +74,12 @@ func (s *APIServer) handlerReadiness(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *APIServer) handleAccount(w http.ResponseWriter, r *http.Request) {
+	accountId, err := uuid.Parse(chi.URLParam(r, "accountId"))
+	if err != nil {
+		WriteErrorJson(w, http.StatusBadRequest, err.Error())
+	}
 	if r.Method == "GET" {
-		s.handleGetAccount(w, r)
+		s.handleGetAccount(w, r, accountId)
 		return
 	} else if r.Method == "DELETE" {
 		s.handleDeleteAccount(w, r)
@@ -84,11 +88,7 @@ func (s *APIServer) handleAccount(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusMethodNotAllowed)
 }
 
-func (s *APIServer) handleGetAccount(w http.ResponseWriter, r *http.Request) {
-	accountId, err := uuid.Parse(chi.URLParam(r, "accountId"))
-	if err != nil {
-		WriteErrorJson(w, http.StatusBadRequest, err.Error())
-	}
+func (s *APIServer) handleGetAccount(w http.ResponseWriter, r *http.Request, accountId uuid.UUID) {
 	if account, err := s.store.GetAccountById(accountId); err != nil {
 		WriteErrorJson(w, http.StatusNotFound, err.Error())
 	} else {
