@@ -11,7 +11,7 @@ import (
 
 func TestCheckHealth(t *testing.T) {
 	server := &APIServer{}
-	req, err := http.NewRequest("GET", settings.AppSettings.API_V1+"/health", nil)
+	req, err := http.NewRequest("GET", settings.AppSettings.Check_Health, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

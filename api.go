@@ -1,12 +1,15 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/google/uuid"
+	"github.com/nguyenanhhao221/go-jwt/settings"
 )
 
 type APIServer struct {
@@ -44,18 +47,19 @@ func (s *APIServer) Run() {
 	v1Router := chi.NewRouter()
 
 	// mount the v1Router to the /v1 route
-	router.Mount("/v1", v1Router)
+	router.Mount(settings.AppSettings.API_V1, v1Router)
 
 	// Handlers
-	v1Router.Get("/health", s.handlerReadiness)
-	v1Router.Get("/account/{accountId}", s.handleAccount)
+	v1Router.Get(settings.AppSettings.Check_Health, s.handlerReadiness)
+	v1Router.Get(settings.AppSettings.Account_Route, s.handleAccount)
+	v1Router.Post(settings.AppSettings.Create_Account_Route, s.handleCreateAccount)
 
 	// Start the server
 	server := &http.Server{
 		Addr:    ":" + s.listenAdd,
 		Handler: router,
 	}
-	log.Printf("Server is listening on %v", s.listenAdd)
+	log.Printf("Server is listening on port %v", s.listenAdd)
 	serverErr := server.ListenAndServe()
 	if serverErr != nil {
 		log.Fatalf("Error: Failed to start server %v", serverErr)
@@ -70,30 +74,45 @@ func (s *APIServer) handlerReadiness(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *APIServer) handleAccount(w http.ResponseWriter, r *http.Request) {
+	accountId, err := uuid.Parse(chi.URLParam(r, "accountId"))
+	if err != nil {
+		WriteErrorJson(w, http.StatusBadRequest, err.Error())
+	}
 	if r.Method == "GET" {
-		s.handleGetAccount(w, r)
-		return
-
-	} else if r.Method == "POST" {
-		s.handleCreateAccount(w, r)
+		s.handleGetAccount(w, r, accountId)
 		return
 	} else if r.Method == "DELETE" {
 		s.handleDeleteAccount(w, r)
-		return
 	}
 
 	w.WriteHeader(http.StatusMethodNotAllowed)
 }
 
-func (s *APIServer) handleGetAccount(w http.ResponseWriter, r *http.Request) {
-	accountId := chi.URLParam(r, "accountId")
-	log.Println(accountId)
-	account := NewAccount("Hao", "Nguyen")
-
-	WriteJSON(w, http.StatusFound, account)
+func (s *APIServer) handleGetAccount(w http.ResponseWriter, r *http.Request, accountId uuid.UUID) {
+	if account, err := s.store.GetAccountById(accountId); err != nil {
+		WriteErrorJson(w, http.StatusNotFound, err.Error())
+	} else {
+		WriteJSON(w, http.StatusFound, account)
+	}
 }
 
+// handleCreateAccount create a new account with first name and last name from client's post request
 func (s *APIServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) {
+	createAccountReq := new(CreateAccountRequest)
+	if err := json.NewDecoder(r.Body).Decode(createAccountReq); err != nil {
+		WriteErrorJson(w, http.StatusBadRequest, err.Error())
+	}
+	newAccount := NewAccount(createAccountReq.FirstName, createAccountReq.LastName)
+	if id, err := s.store.CreateAccount(newAccount); err != nil {
+		WriteErrorJson(w, http.StatusBadRequest, err.Error())
+	} else {
+		type createAccountRes struct {
+			ID uuid.UUID `json:"id"`
+		}
+		WriteJSON(w, http.StatusCreated, &createAccountRes{
+			ID: id,
+		})
+	}
 }
 
 func (s *APIServer) handleDeleteAccount(w http.ResponseWriter, r *http.Request) {

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 )
 
@@ -10,6 +12,7 @@ type Account struct {
 	LastName  string    `json:"lastName"`
 	Number    int64     `json:"number"`
 	Balance   int64     `json:"balance"`
+	CreatedAt time.Time `json:"createdAt"`
 }
 
 func NewAccount(firstName, lastName string) *Account {
@@ -20,5 +23,11 @@ func NewAccount(firstName, lastName string) *Account {
 		LastName:  lastName,
 		Number:    0,
 		Balance:   0,
+		CreatedAt: time.Now().UTC(),
 	}
+}
+
+type CreateAccountRequest struct {
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
 }
