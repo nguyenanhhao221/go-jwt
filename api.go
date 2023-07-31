@@ -52,6 +52,7 @@ func (s *APIServer) Run() {
 	// Handlers
 	v1Router.Get(settings.AppSettings.Check_Health, s.handlerReadiness)
 	v1Router.Get(settings.AppSettings.Account_Route, s.handleAccount)
+	v1Router.Delete(settings.AppSettings.Account_Route, s.handleAccount)
 	v1Router.Post(settings.AppSettings.Create_Account_Route, s.handleCreateAccount)
 
 	// Start the server
@@ -82,10 +83,11 @@ func (s *APIServer) handleAccount(w http.ResponseWriter, r *http.Request) {
 		s.handleGetAccount(w, r, accountId)
 		return
 	} else if r.Method == "DELETE" {
-		s.handleDeleteAccount(w, r)
+		s.handleDeleteAccount(w, r, accountId)
+		return
+	} else {
+		w.WriteHeader(http.StatusMethodNotAllowed)
 	}
-
-	w.WriteHeader(http.StatusMethodNotAllowed)
 }
 
 func (s *APIServer) handleGetAccount(w http.ResponseWriter, r *http.Request, accountId uuid.UUID) {
@@ -115,7 +117,12 @@ func (s *APIServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-func (s *APIServer) handleDeleteAccount(w http.ResponseWriter, r *http.Request) {
+func (s *APIServer) handleDeleteAccount(w http.ResponseWriter, r *http.Request, accountId uuid.UUID) {
+	if err := s.store.DeleteAccountById(accountId); err != nil {
+		WriteErrorJson(w, http.StatusNotFound, err.Error())
+	} else {
+		WriteJSON(w, http.StatusNoContent, 1)
+	}
 }
 
 func (s *APIServer) handleTransfer(w http.ResponseWriter, r *http.Request) error {
