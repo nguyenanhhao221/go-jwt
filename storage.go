@@ -15,7 +15,7 @@ type Storage interface {
 	createAccountTable() error
 	CreateAccount(*Account) (uuid.UUID, error)
 	GetAccountById(accountId uuid.UUID) (*Account, error)
-	// DeleteAccount(int) error
+	DeleteAccountById(accountId uuid.UUID) error
 	// UpdateAccount(*Account) error
 }
 
@@ -95,6 +95,19 @@ func (s *PostgresStore) GetAccountById(accountId uuid.UUID) (*Account, error) {
 		return &account, err
 	}
 	return &account, nil
+}
+
+func (s *PostgresStore) DeleteAccountById(accountId uuid.UUID) error {
+	query := `
+	DELETE 
+	FROM account
+	WHERE id = $1 
+	`
+	if _, err := s.db.Exec(query, accountId); err != nil {
+		return err
+	} else {
+		return nil
+	}
 }
 
 func (s *PostgresStore) CreateAccount(newAccount *Account) (uuid.UUID, error) {
