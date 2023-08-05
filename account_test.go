@@ -40,15 +40,15 @@ func TestAccountCI(t *testing.T) {
 		}
 
 		handler := http.HandlerFunc(server.handleCreateAccount)
-		rr := httptest.NewRecorder()
+		testRecorder := httptest.NewRecorder()
 
-		handler.ServeHTTP(rr, req)
+		handler.ServeHTTP(testRecorder, req)
 
-		if rr.Code != http.StatusCreated {
-			t.Errorf("expected status code %d but got %d", http.StatusCreated, rr.Code)
+		if testRecorder.Code != http.StatusCreated {
+			t.Errorf("expected status code %d but got %d", http.StatusCreated, testRecorder.Code)
 		}
 
-		if err := json.Unmarshal(rr.Body.Bytes(), &createAccountResponse); err != nil {
+		if err := json.Unmarshal(testRecorder.Body.Bytes(), &createAccountResponse); err != nil {
 			t.Errorf("failed to unmarshal response body, the id must be uuid type: %s", err)
 		}
 

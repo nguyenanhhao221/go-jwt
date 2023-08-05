@@ -102,7 +102,7 @@ func (s *APIServer) handleGetAccount(w http.ResponseWriter, r *http.Request, acc
 func (s *APIServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) {
 	createAccountReq := new(CreateAccountRequest)
 	if err := json.NewDecoder(r.Body).Decode(createAccountReq); err != nil {
-		WriteErrorJson(w, http.StatusBadRequest, err.Error())
+		WriteErrorJson(w, http.StatusForbidden, err.Error())
 	}
 	newAccount := NewAccount(createAccountReq.FirstName, createAccountReq.LastName)
 	if id, err := s.store.CreateAccount(newAccount); err != nil {
