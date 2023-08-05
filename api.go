@@ -106,6 +106,7 @@ func (s *APIServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) 
 	}
 	newAccount := NewAccount(createAccountReq.FirstName, createAccountReq.LastName)
 	if id, err := s.store.CreateAccount(newAccount); err != nil {
+		log.Printf("Error while creating account %v", err)
 		WriteErrorJson(w, http.StatusInternalServerError, err.Error())
 	} else {
 		type createAccountRes struct {
