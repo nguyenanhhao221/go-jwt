@@ -41,8 +41,8 @@ jobs:
       - name: Install dependencies
         run: go get .
 
-      - name: Build
-        run: make build
+      - name: Run Service to initialize database
+        run: make run
 
       - name: Test
         run: make test
