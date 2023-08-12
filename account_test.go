@@ -2,11 +2,15 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/go-chi/chi/v5"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/google/uuid"
 	"github.com/nguyenanhhao221/go-jwt/settings"
 )
@@ -55,6 +59,69 @@ func TestAccountCI(t *testing.T) {
 		expectIdToBeUUID := true
 		if expectIdToBeUUID != isValidUUID(createAccountResponse.ID.String()) {
 			t.Errorf("the id return must be an uuid. Current id: %s", createAccountResponse.ID)
+		}
+	})
+
+	t.Run("GetAccount", func(t *testing.T) {
+		accountId := createAccountResponse.ID
+		req, err := http.NewRequest("GET", "v1/account/"+accountId.String(), nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		// NOTE: Because of Chi, if we need to test url path that have param variable we must add the context manually like this
+		// So the handler can pick up the param (accountId).
+		// Make sure we import the chi package with same version in the test context and the handler main code
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("accountId", accountId.String())
+
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		handler := http.HandlerFunc(server.handleAccount)
+
+		rr := httptest.NewRecorder()
+		handler.ServeHTTP(rr, req)
+
+		expectHttpStatus := http.StatusFound
+		if rr.Code != expectHttpStatus {
+			t.Errorf("expected status code %d but got %d", expectHttpStatus, rr.Code)
+		}
+
+		expectCreatedUser := Account{
+			ID:        accountId,
+			FirstName: mockUser.FirstName,
+			LastName:  mockUser.LastName,
+			Number:    0,
+			Balance:   0,
+		}
+
+		var responseUser Account
+		if err := json.NewDecoder(rr.Body).Decode(&responseUser); err != nil {
+			t.Errorf("Failed to decode response user body %v", err)
+		}
+
+		if cmp.Equal(expectCreatedUser, responseUser, cmpopts.IgnoreFields(Account{}, "CreatedAt")) == false {
+			t.Errorf("expected create user %v but got %v", expectCreatedUser, &responseUser)
+		}
+	})
+	t.Run("DeleteTestAccount", func(t *testing.T) {
+		accountId := createAccountResponse.ID
+		req, err := http.NewRequest(http.MethodDelete, "v1/account/"+accountId.String(), nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("accountId", accountId.String())
+
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		handler := http.HandlerFunc(server.handleAccount)
+
+		rr := httptest.NewRecorder()
+		handler.ServeHTTP(rr, req)
+
+		expectHttpStatus := http.StatusNoContent
+		if rr.Code != expectHttpStatus {
+			t.Errorf("expected status code %d but got %d", expectHttpStatus, rr.Code)
 		}
 	})
 }
