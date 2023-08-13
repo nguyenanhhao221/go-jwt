@@ -52,6 +52,7 @@ func (s *APIServer) Run() {
 	// Handlers
 	v1Router.Get(settings.AppSettings.Check_Health, s.handlerReadiness)
 	v1Router.Get(settings.AppSettings.Account_Route, s.handleAccount)
+	v1Router.Put(settings.AppSettings.Account_Route, s.handleAccount)
 	v1Router.Delete(settings.AppSettings.Account_Route, s.handleAccount)
 	v1Router.Post(settings.AppSettings.Create_Account_Route, s.handleCreateAccount)
 
@@ -85,6 +86,9 @@ func (s *APIServer) handleAccount(w http.ResponseWriter, r *http.Request) {
 	} else if r.Method == "DELETE" {
 		s.handleDeleteAccount(w, r, accountId)
 		return
+	} else if r.Method == "PUT" {
+		s.handleUpdateAccount(w, r, accountId)
+		return
 	} else {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 	}
@@ -115,6 +119,19 @@ func (s *APIServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) 
 		WriteJSON(w, http.StatusCreated, &createAccountRes{
 			ID: id,
 		})
+	}
+}
+
+func (s *APIServer) handleUpdateAccount(w http.ResponseWriter, r *http.Request, accountId uuid.UUID) {
+	updateAccountReq := new(Account)
+
+	if err := json.NewDecoder(r.Body).Decode(updateAccountReq); err != nil {
+		WriteErrorJson(w, http.StatusForbidden, err.Error())
+	}
+	if err := s.store.UpdateAccountById(updateAccountReq, accountId); err != nil {
+		WriteErrorJson(w, http.StatusNotFound, err.Error())
+	} else {
+		WriteJSON(w, http.StatusNoContent, nil)
 	}
 }
 

@@ -16,7 +16,7 @@ type Storage interface {
 	CreateAccount(*Account) (uuid.UUID, error)
 	GetAccountById(accountId uuid.UUID) (*Account, error)
 	DeleteAccountById(accountId uuid.UUID) error
-	// UpdateAccount(*Account) error
+	UpdateAccountById(updateAccount *Account, accountId uuid.UUID) error
 }
 
 type PostgresStore struct {
@@ -129,4 +129,21 @@ func (s *PostgresStore) CreateAccount(newAccount *Account) (uuid.UUID, error) {
 		return uuid.Nil, err
 	}
 	return id, nil
+}
+
+func (s *PostgresStore) UpdateAccountById(updateAccount *Account, accountId uuid.UUID) error {
+	query := `
+	UPDATE ACCOUNT 	
+	SET first_name = $2, last_name = $3, number = $4, balance = $5
+	WHERE id = $1
+	`
+	_, err := s.db.Exec(
+		query,
+		accountId,
+		updateAccount.FirstName,
+		updateAccount.LastName,
+		updateAccount.Number,
+		updateAccount.Balance,
+	)
+	return err
 }
