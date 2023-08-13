@@ -103,6 +103,57 @@ func TestAccountCI(t *testing.T) {
 			t.Errorf("expected create user %v but got %v", expectCreatedUser, &responseUser)
 		}
 	})
+	t.Run("UpdateTestAccount", func(t *testing.T) {
+		accountId := createAccountResponse.ID
+		mockUpdateAccount := Account{FirstName: "Update Test First Name", LastName: "Update Test Last Name", ID: accountId, Number: 0, Balance: 0}
+		reqBodyJSON, err := json.Marshal(mockUpdateAccount)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		req, err := http.NewRequest(http.MethodPut, "v1/account/"+accountId.String(), bytes.NewBuffer(reqBodyJSON))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("accountId", accountId.String())
+
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		handler := http.HandlerFunc(server.handleAccount)
+
+		rr := httptest.NewRecorder()
+		handler.ServeHTTP(rr, req)
+
+		expectHttpStatus := http.StatusNoContent
+		if rr.Code != expectHttpStatus {
+			t.Errorf("expected status code %d but got %d", expectHttpStatus, rr.Code)
+		}
+
+		getAccountReq, err := http.NewRequest("GET", "v1/account/"+accountId.String(), nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		getAccountReq = getAccountReq.WithContext(context.WithValue(getAccountReq.Context(), chi.RouteCtxKey, rctx))
+		getAccRecorder := httptest.NewRecorder()
+		handler.ServeHTTP(getAccRecorder, getAccountReq)
+
+		expectGetHttpStatus := http.StatusFound
+		if getAccRecorder.Code != expectGetHttpStatus {
+			t.Errorf("expected status code %d but got %d", expectGetHttpStatus, getAccRecorder.Code)
+		}
+
+		var responseUser Account
+		if err := json.NewDecoder(getAccRecorder.Body).Decode(&responseUser); err != nil {
+			t.Errorf("Failed to decode response user body %v", err)
+		}
+
+		if cmp.Equal(mockUpdateAccount, responseUser, cmpopts.IgnoreFields(Account{}, "CreatedAt")) == false {
+			t.Errorf("expected create user %v but got %v", mockUpdateAccount, &responseUser)
+		}
+	})
 	t.Run("DeleteTestAccount", func(t *testing.T) {
 		accountId := createAccountResponse.ID
 		req, err := http.NewRequest(http.MethodDelete, "v1/account/"+accountId.String(), nil)
