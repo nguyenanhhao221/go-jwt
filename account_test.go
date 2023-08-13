@@ -86,17 +86,16 @@ func TestAccountCI(t *testing.T) {
 			t.Errorf("expected status code %d but got %d", expectHttpStatus, rr.Code)
 		}
 
+		var responseUser Account
+		if err := json.NewDecoder(rr.Body).Decode(&responseUser); err != nil {
+			t.Errorf("Failed to decode response user body %v", err)
+		}
 		expectCreatedUser := Account{
 			ID:        accountId,
 			FirstName: mockUser.FirstName,
 			LastName:  mockUser.LastName,
-			Number:    0,
+			Number:    responseUser.Number,
 			Balance:   0,
-		}
-
-		var responseUser Account
-		if err := json.NewDecoder(rr.Body).Decode(&responseUser); err != nil {
-			t.Errorf("Failed to decode response user body %v", err)
 		}
 
 		if cmp.Equal(expectCreatedUser, responseUser, cmpopts.IgnoreFields(Account{}, "CreatedAt")) == false {

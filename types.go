@@ -1,6 +1,7 @@
 package main
 
 import (
+	"math/rand"
 	"time"
 
 	"github.com/google/uuid"
@@ -21,7 +22,7 @@ func NewAccount(firstName, lastName string) *Account {
 		ID:        id,
 		FirstName: firstName,
 		LastName:  lastName,
-		Number:    0,
+		Number:    int64(rand.Intn(1000000)),
 		Balance:   0,
 		CreatedAt: time.Now().UTC(),
 	}
