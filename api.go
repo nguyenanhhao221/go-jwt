@@ -80,13 +80,13 @@ func (s *APIServer) handleAccount(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		WriteErrorJson(w, http.StatusBadRequest, err.Error())
 	}
-	if r.Method == "GET" {
+	if r.Method == http.MethodGet {
 		s.handleGetAccount(w, r, accountId)
 		return
-	} else if r.Method == "DELETE" {
+	} else if r.Method == http.MethodDelete {
 		s.handleDeleteAccount(w, r, accountId)
 		return
-	} else if r.Method == "PUT" {
+	} else if r.Method == http.MethodPut {
 		s.handleUpdateAccount(w, r, accountId)
 		return
 	} else {
