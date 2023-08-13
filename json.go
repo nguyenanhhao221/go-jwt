@@ -9,6 +9,9 @@ import (
 func WriteJSON(w http.ResponseWriter, statusCode int, payload interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
+	if statusCode == http.StatusNoContent {
+		return
+	}
 	err := json.NewEncoder(w).Encode(payload)
 	if err != nil {
 		log.Printf("Error: failed to encode the payload %v", err)
