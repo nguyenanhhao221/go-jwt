@@ -6,6 +6,7 @@ type Settings struct {
 	Check_Health         string
 	Account_Route        string
 	Create_Account_Route string
+	Transfer_Route       string
 }
 
 var AppSettings *Settings
@@ -17,5 +18,6 @@ func init() {
 		Check_Health:         "/health",
 		Account_Route:        "/account/{accountId}",
 		Create_Account_Route: "/account/create",
+		Transfer_Route:       "/transfer/{accountNumber}",
 	}
 }
