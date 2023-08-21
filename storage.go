@@ -13,6 +13,7 @@ import (
 
 type Storage interface {
 	createAccountTable() error
+	GetAllAccounts() ([]Account, error)
 	CreateAccount(*Account) (uuid.UUID, error)
 	GetAccountById(accountId uuid.UUID) (*Account, error)
 	DeleteAccountById(accountId uuid.UUID) error
@@ -54,6 +55,37 @@ func NewPostgresStore() (*PostgresStore, error) {
 	return &PostgresStore{
 		db: sqlConnection,
 	}, nil
+}
+
+func (s *PostgresStore) GetAllAccounts() ([]Account, error) {
+	query := `
+	SELECT * from ACCOUNT 
+	`
+	rows, err := s.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var allAccounts []Account
+	for rows.Next() {
+		var account Account
+		if err := rows.Scan(
+			&account.ID,
+			&account.FirstName,
+			&account.LastName,
+			&account.Number,
+			&account.Balance,
+			&account.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		allAccounts = append(allAccounts, account)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return allAccounts, err
 }
 
 func (s *PostgresStore) Init() error {

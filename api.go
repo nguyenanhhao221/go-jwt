@@ -52,6 +52,7 @@ func (s *APIServer) Run() {
 	// Handlers
 	v1Router.Get(settings.AppSettings.Check_Health, s.handlerReadiness)
 	v1Router.Get(settings.AppSettings.Account_Route, s.handleAccount)
+	v1Router.Get(settings.AppSettings.All_Account_Route, s.handleGetAllAccount)
 	v1Router.Put(settings.AppSettings.Account_Route, s.handleAccount)
 	v1Router.Delete(settings.AppSettings.Account_Route, s.handleAccount)
 	v1Router.Post(settings.AppSettings.Create_Account_Route, s.handleCreateAccount)
@@ -73,6 +74,14 @@ func (s *APIServer) handlerReadiness(w http.ResponseWriter, r *http.Request) {
 		Status string `json:"status"`
 	}
 	WriteJSON(w, http.StatusOK, Ready{Status: "alive"})
+}
+
+func (s *APIServer) handleGetAllAccount(w http.ResponseWriter, r *http.Request) {
+	if allAccounts, err := s.store.GetAllAccounts(); err != nil {
+		WriteErrorJson(w, http.StatusInternalServerError, err.Error())
+	} else {
+		WriteJSON(w, http.StatusFound, allAccounts)
+	}
 }
 
 func (s *APIServer) handleAccount(w http.ResponseWriter, r *http.Request) {
