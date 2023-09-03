@@ -99,8 +99,8 @@ func (s *PostgresStore) createAccountTable() error {
 	id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
 	first_name VARCHAR(50),
 	last_name VARCHAR(50),
-	number SERIAL,
-	balance SERIAL,
+	number INTEGER,
+	balance INTEGER,
 	created_at TIMESTAMP
 	)`
 	_, err := s.db.Exec(query)
