@@ -20,6 +20,6 @@ func init() {
 		All_Account_Route:    "/accounts",
 		Account_Route:        "/account/{accountId}",
 		Create_Account_Route: "/account/create",
-		Transfer_Route:       "/transfer/{accountNumber}",
+		Transfer_Route:       "/transfer",
 	}
 }

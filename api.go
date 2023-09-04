@@ -56,6 +56,7 @@ func (s *APIServer) Run() {
 	v1Router.Put(settings.AppSettings.Account_Route, s.handleAccount)
 	v1Router.Delete(settings.AppSettings.Account_Route, s.handleAccount)
 	v1Router.Post(settings.AppSettings.Create_Account_Route, s.handleCreateAccount)
+	v1Router.Post(settings.AppSettings.Transfer_Route, withJWTAuth(s.handleTransfer))
 
 	// Start the server
 	server := &http.Server{
@@ -152,6 +153,14 @@ func (s *APIServer) handleDeleteAccount(w http.ResponseWriter, r *http.Request, 
 	}
 }
 
-func (s *APIServer) handleTransfer(w http.ResponseWriter, r *http.Request) error {
-	return nil
+func (s *APIServer) handleTransfer(w http.ResponseWriter, r *http.Request) {
+	type TransferBalanceBody struct {
+		Number  int64 `json:"toAccount"`
+		Balance int64 `json:"balance"`
+	}
+	transferBalanceReq := new(TransferBalanceBody)
+	if err := json.NewDecoder(r.Body).Decode(transferBalanceReq); err != nil {
+		WriteErrorJson(w, http.StatusForbidden, err.Error())
+	}
+	WriteJSON(w, http.StatusCreated, transferBalanceReq)
 }
