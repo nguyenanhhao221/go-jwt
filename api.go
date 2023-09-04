@@ -11,6 +11,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/nguyenanhhao221/go-jwt/settings"
+	"github.com/nguyenanhhao221/go-jwt/util"
 )
 
 type APIServer struct {
@@ -57,6 +58,7 @@ func (s *APIServer) Run() {
 	v1Router.Put(settings.AppSettings.Account_Route, s.handleAccount)
 	v1Router.Delete(settings.AppSettings.Account_Route, s.handleAccount)
 	v1Router.Post(settings.AppSettings.Create_Account_Route, s.handleCreateAccount)
+	v1Router.Post(settings.AppSettings.SignIn_Account_Route, s.handleSignIn)
 	v1Router.Post(settings.AppSettings.Transfer_Route, withJWTAuth(s.handleTransfer))
 
 	// Start the server
@@ -174,6 +176,31 @@ func (s *APIServer) handleDeleteAccount(w http.ResponseWriter, r *http.Request, 
 		WriteErrorJson(w, http.StatusNotFound, err.Error())
 	} else {
 		WriteJSON(w, http.StatusNoContent, 1)
+	}
+}
+
+func (s *APIServer) handleSignIn(w http.ResponseWriter, r *http.Request) {
+	type SignInReqBody struct {
+		Username string `json:"username" validate:"required"`
+		Password string `json:"password" validate:"required"`
+	}
+	signInReqBody := new(SignInReqBody)
+	if err := json.NewDecoder(r.Body).Decode(signInReqBody); err != nil {
+		WriteErrorJson(w, http.StatusForbidden, err.Error())
+		return
+	}
+
+	if account, err := s.store.GetAccountByUsername(signInReqBody.Username); err != nil {
+		WriteErrorJson(w, http.StatusInternalServerError, err.Error())
+		return
+	} else {
+		isPasswordMatch := util.CheckPasswordHash(signInReqBody.Password, account.Password)
+		if !isPasswordMatch {
+			WriteErrorJson(w, http.StatusUnauthorized, "Wrong username or password")
+			return
+		}
+		WriteJSON(w, http.StatusOK, account)
+		return
 	}
 }
 
