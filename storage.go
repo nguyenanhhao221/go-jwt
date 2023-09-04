@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
+	"github.com/nguyenanhhao221/go-jwt/util"
 )
 
 type Storage interface {
@@ -99,6 +100,8 @@ func (s *PostgresStore) createAccountTable() error {
 	id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
 	first_name VARCHAR(50),
 	last_name VARCHAR(50),
+	username VARCHAR(255) NOT NULL,
+	password BYTEA NOT NULL,
 	number INTEGER,
 	balance INTEGER,
 	created_at TIMESTAMP
@@ -142,13 +145,17 @@ func (s *PostgresStore) DeleteAccountById(accountId uuid.UUID) error {
 	}
 }
 
+// CreateAccount Create account in the database, also handle hashing the password
 func (s *PostgresStore) CreateAccount(newAccount *Account) (uuid.UUID, error) {
 	query := `
-	INSERT INTO ACCOUNT (first_name, last_name, number, balance, created_at)
-	VALUES ($1, $2, $3, $4, $5)
+	INSERT INTO ACCOUNT (first_name, last_name, number, balance, created_at, username, password)
+	VALUES ($1, $2, $3, $4, $5, $6, $7)
 	RETURNING ID
 	`
-
+	hashPassword, hashPasswordErr := util.HashPassword(newAccount.Password)
+	if hashPasswordErr != nil {
+		return uuid.Nil, hashPasswordErr
+	}
 	var id uuid.UUID
 	err := s.db.QueryRow(
 		query,
@@ -156,7 +163,8 @@ func (s *PostgresStore) CreateAccount(newAccount *Account) (uuid.UUID, error) {
 		newAccount.LastName,
 		newAccount.Number,
 		newAccount.Balance,
-		newAccount.CreatedAt).Scan(&id)
+		newAccount.CreatedAt,
+		newAccount.Username, hashPassword).Scan(&id)
 	if err != nil {
 		return uuid.Nil, err
 	}

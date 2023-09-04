@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/nguyenanhhao221/go-jwt/settings"
 )
@@ -51,7 +52,7 @@ func (s *APIServer) Run() {
 
 	// Handlers
 	v1Router.Get(settings.AppSettings.Check_Health, s.handlerReadiness)
-	v1Router.Get(settings.AppSettings.Account_Route, s.handleAccount)
+	v1Router.Get(settings.AppSettings.Account_Route, withJWTAuth(s.handleAccount))
 	v1Router.Get(settings.AppSettings.All_Account_Route, s.handleGetAllAccount)
 	v1Router.Put(settings.AppSettings.Account_Route, s.handleAccount)
 	v1Router.Delete(settings.AppSettings.Account_Route, s.handleAccount)
@@ -117,8 +118,31 @@ func (s *APIServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) 
 	createAccountReq := new(CreateAccountRequest)
 	if err := json.NewDecoder(r.Body).Decode(createAccountReq); err != nil {
 		WriteErrorJson(w, http.StatusForbidden, err.Error())
+		return
 	}
-	newAccount := NewAccount(createAccountReq.FirstName, createAccountReq.LastName)
+
+	validate := validator.New(validator.WithRequiredStructEnabled())
+	type IError struct {
+		Field string
+		Tag   string
+		Value string
+	}
+
+	var errors []*IError
+	if err := validate.Struct(createAccountReq); err != nil {
+		for _, err := range err.(validator.ValidationErrors) {
+			var el IError
+			el.Field = err.Field()
+			el.Tag = err.Tag()
+			el.Value = err.Param()
+			errors = append(errors, &el)
+		}
+		// Convert errors to a JSON string
+		errorsJSON, _ := json.Marshal(errors)
+		WriteErrorJson(w, http.StatusBadRequest, string(errorsJSON))
+		return
+	}
+	newAccount := NewAccount(createAccountReq.FirstName, createAccountReq.LastName, createAccountReq.Username, createAccountReq.Password)
 	if id, err := s.store.CreateAccount(newAccount); err != nil {
 		log.Printf("Error while creating account %v", err)
 		WriteErrorJson(w, http.StatusInternalServerError, err.Error())
