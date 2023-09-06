@@ -8,6 +8,7 @@ type Settings struct {
 	Account_Route        string
 	Create_Account_Route string
 	Transfer_Route       string
+	SignIn_Account_Route string
 }
 
 var AppSettings *Settings
@@ -20,6 +21,7 @@ func init() {
 		All_Account_Route:    "/accounts",
 		Account_Route:        "/account/{accountId}",
 		Create_Account_Route: "/account/create",
+		SignIn_Account_Route: "/account/signin",
 		Transfer_Route:       "/transfer",
 	}
 }
