@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
+	"github.com/nguyenanhhao221/go-jwt/internal/auth"
 	"github.com/nguyenanhhao221/go-jwt/settings"
 	"github.com/nguyenanhhao221/go-jwt/util"
 )
@@ -163,11 +165,14 @@ func (s *APIServer) handleUpdateAccount(w http.ResponseWriter, r *http.Request, 
 
 	if err := json.NewDecoder(r.Body).Decode(updateAccountReq); err != nil {
 		WriteErrorJson(w, http.StatusForbidden, err.Error())
+		return
 	}
 	if err := s.store.UpdateAccountById(updateAccountReq, accountId); err != nil {
 		WriteErrorJson(w, http.StatusNotFound, err.Error())
+		return
 	} else {
 		WriteJSON(w, http.StatusNoContent, nil)
+		return
 	}
 }
 
@@ -199,7 +204,15 @@ func (s *APIServer) handleSignIn(w http.ResponseWriter, r *http.Request) {
 			WriteErrorJson(w, http.StatusUnauthorized, "Wrong username or password")
 			return
 		}
-		WriteJSON(w, http.StatusOK, account)
+		if jwtToken, err := auth.CreateJWT(account.ID); err != nil {
+			WriteErrorJson(w, http.StatusInternalServerError, fmt.Sprintf("Failed to create JWT token %v", err))
+			return
+		} else {
+			type TokenRes struct {
+				Token string `json:"token"`
+			}
+			WriteJSON(w, http.StatusOK, TokenRes{Token: jwtToken})
+		}
 		return
 	}
 }
