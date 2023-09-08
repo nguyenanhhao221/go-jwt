@@ -36,6 +36,10 @@ func CreateJWT(accountId uuid.UUID) (string, error) {
 	// Sign and get the complete encoded token as a string using the secret
 	hmacSecret := os.Getenv("JWT_SECRET")
 	log.Println(hmacSecret)
+	// Here we have to convert the secret into []bytes slice
+	// Check out the signature of the SignedString it expect an interface{} type, however this is just a bait
+	// Because base on different SigningMethod we choose, the value pass in need to be some specific types, so the library just put interface{} for now
+	// Read more: https://github.com/dgrijalva/jwt-go/issues/65
 	if tokenString, err := token.SignedString([]byte(hmacSecret)); err != nil {
 		log.Printf("Error failed to sign token %v", err)
 		return "", err
