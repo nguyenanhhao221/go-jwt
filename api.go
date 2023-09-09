@@ -55,7 +55,7 @@ func (s *APIServer) Run() {
 
 	// Handlers
 	v1Router.Get(settings.AppSettings.Check_Health, s.handlerReadiness)
-	v1Router.Get(settings.AppSettings.Account_Route, withJWTAuth(s.handleAccount))
+	v1Router.Get(settings.AppSettings.Account_Route, s.handleAccount)
 	v1Router.Get(settings.AppSettings.All_Account_Route, s.handleGetAllAccount)
 	v1Router.Put(settings.AppSettings.Account_Route, s.handleAccount)
 	v1Router.Delete(settings.AppSettings.Account_Route, s.handleAccount)
@@ -106,14 +106,17 @@ func (s *APIServer) handleAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	} else {
 		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
 	}
 }
 
 func (s *APIServer) handleGetAccount(w http.ResponseWriter, r *http.Request, accountId uuid.UUID) {
 	if account, err := s.store.GetAccountById(accountId); err != nil {
 		WriteErrorJson(w, http.StatusNotFound, err.Error())
+		return
 	} else {
-		WriteJSON(w, http.StatusFound, account)
+		WriteJSON(w, http.StatusOK, account)
+		return
 	}
 }
 
