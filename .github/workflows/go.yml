@@ -43,5 +43,11 @@ jobs:
       - name: Install dependencies
         run: go get .
 
+      - name: Vendor
+        run: go mod vendor
+
+      - name: Tidy
+        run: go mod tidy
+
       - name: Test
         run: make test
