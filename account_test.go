@@ -29,7 +29,12 @@ func TestAccountCI(t *testing.T) {
 	var createAccountResponse struct {
 		ID uuid.UUID `json:"id"`
 	}
-	mockUser := &CreateAccountRequest{FirstName: "Test User First Name", LastName: "Test User Last Name"}
+	mockUser := &CreateAccountRequest{
+		FirstName: "Test User First Name",
+		LastName:  "Test User Last Name",
+		Username:  "TestUser",
+		Password:  "TestPassword",
+	}
 
 	t.Run("CreateAccount", func(t *testing.T) {
 		createcAccReqBody := mockUser
