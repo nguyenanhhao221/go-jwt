@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"os"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
@@ -16,7 +17,7 @@ type Storage interface {
 	createAccountTable() error
 	GetAllAccounts() ([]Account, error)
 	CreateAccount(*Account) (uuid.UUID, error)
-	GetAccountById(accountId uuid.UUID) (*Account, error)
+	GetAccountById(accountId uuid.UUID) (*AccountResponse, error)
 	GetAccountByUsername(username string) (*Account, error)
 	DeleteAccountById(accountId uuid.UUID) error
 	UpdateAccountById(updateAccount *Account, accountId uuid.UUID) error
@@ -111,13 +112,23 @@ func (s *PostgresStore) createAccountTable() error {
 	return err
 }
 
-func (s *PostgresStore) GetAccountById(accountId uuid.UUID) (*Account, error) {
+// AccountResponse Use this if we don't want to include the username and password
+type AccountResponse struct {
+	ID        uuid.UUID `json:"id"`
+	FirstName string    `json:"firstName"`
+	LastName  string    `json:"lastName"`
+	Number    int64     `json:"number"`
+	Balance   int64     `json:"balance"`
+	CreatedAt time.Time `json:"createdAt"`
+}
+
+func (s *PostgresStore) GetAccountById(accountId uuid.UUID) (*AccountResponse, error) {
 	query := `
-	SELECT *
+	SELECT id, first_name, last_name, number, balance, created_at
 	FROM account
 	WHERE id = $1 
 	`
-	var account Account
+	var account AccountResponse
 	row := s.db.QueryRow(query, accountId)
 	err := row.Scan(
 		&account.ID,
