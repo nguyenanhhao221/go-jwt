@@ -18,7 +18,7 @@ type Storage interface {
 	GetAllAccounts() ([]Account, error)
 	CreateAccount(*Account) (uuid.UUID, error)
 	GetAccountById(accountId uuid.UUID) (*AccountResponse, error)
-	GetAccountByUsername(username string) (*Account, error)
+	GetAccountByEmail(email string) (*Account, error)
 	DeleteAccountById(accountId uuid.UUID) error
 	UpdateAccountById(updateAccount *Account, accountId uuid.UUID) error
 }
@@ -102,7 +102,7 @@ func (s *PostgresStore) createAccountTable() error {
 	id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
 	first_name VARCHAR(50),
 	last_name VARCHAR(50),
-	username VARCHAR(255) NOT NULL,
+	email VARCHAR(255) NOT NULL,
 	password BYTEA NOT NULL,
 	number INTEGER,
 	balance INTEGER,
@@ -144,19 +144,19 @@ func (s *PostgresStore) GetAccountById(accountId uuid.UUID) (*AccountResponse, e
 	return &account, nil
 }
 
-func (s *PostgresStore) GetAccountByUsername(username string) (*Account, error) {
+func (s *PostgresStore) GetAccountByEmail(email string) (*Account, error) {
 	query := `
 	SELECT *
 	FROM account
-	WHERE username = $1 
+	WHERE email = $1 
 	`
 	var account Account
-	row := s.db.QueryRow(query, username)
+	row := s.db.QueryRow(query, email)
 	err := row.Scan(
 		&account.ID,
 		&account.FirstName,
 		&account.LastName,
-		&account.Username,
+		&account.Email,
 		&account.Password,
 		&account.Number,
 		&account.Balance,
@@ -184,7 +184,7 @@ func (s *PostgresStore) DeleteAccountById(accountId uuid.UUID) error {
 // CreateAccount Create account in the database, also handle hashing the password
 func (s *PostgresStore) CreateAccount(newAccount *Account) (uuid.UUID, error) {
 	query := `
-	INSERT INTO ACCOUNT (first_name, last_name, number, balance, created_at, username, password)
+	INSERT INTO ACCOUNT (first_name, last_name, number, balance, created_at, email, password)
 	VALUES ($1, $2, $3, $4, $5, $6, $7)
 	RETURNING ID
 	`
@@ -200,7 +200,7 @@ func (s *PostgresStore) CreateAccount(newAccount *Account) (uuid.UUID, error) {
 		newAccount.Number,
 		newAccount.Balance,
 		newAccount.CreatedAt,
-		newAccount.Username, hashPassword).Scan(&id)
+		newAccount.Email, hashPassword).Scan(&id)
 	if err != nil {
 		return uuid.Nil, err
 	}

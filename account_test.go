@@ -32,7 +32,7 @@ func TestAccountCI(t *testing.T) {
 	mockUser := &CreateAccountRequest{
 		FirstName: "Test User First Name",
 		LastName:  "Test User Last Name",
-		Username:  "TestUser",
+		Email:     "Test@email.com",
 		Password:  "TestPassword",
 	}
 
