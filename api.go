@@ -130,11 +130,10 @@ func (s *APIServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) 
 
 	validate := validator.New(validator.WithRequiredStructEnabled())
 	type IError struct {
-		Field string
-		Tag   string
-		Value string
+		Field string `json:"field"`
+		Tag   string `json:"tag"`
+		Value string `json:"value"`
 	}
-
 	var errors []*IError
 	if err := validate.Struct(createAccountReq); err != nil {
 		for _, err := range err.(validator.ValidationErrors) {
