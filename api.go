@@ -149,10 +149,16 @@ func (s *APIServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	newAccount := NewAccount(createAccountReq.FirstName, createAccountReq.LastName, createAccountReq.Email, createAccountReq.Password)
-	// TODO: CHECK IF EMAIL EXIST
+	if _, err := s.store.GetAccountByEmail(createAccountReq.Email); err == nil {
+		log.Printf("Error while checking account email %v", err)
+		WriteErrorJson(w, http.StatusForbidden, "Email already existed")
+		return
+
+	}
 	if id, err := s.store.CreateAccount(newAccount); err != nil {
 		log.Printf("Error while creating account %v", err)
 		WriteErrorJson(w, http.StatusInternalServerError, err.Error())
+		return
 	} else {
 		type createAccountRes struct {
 			ID uuid.UUID `json:"id"`
