@@ -91,7 +91,7 @@ func (s *APIServer) handleGetAllAccount(w http.ResponseWriter, r *http.Request) 
 }
 
 func (s *APIServer) handleAccount(w http.ResponseWriter, r *http.Request) {
-	accountId, err := uuid.Parse(chi.URLParam(r, "accountId"))
+	accountId, err := util.GetIdFromRequest(r)
 	if err != nil {
 		WriteErrorJson(w, http.StatusBadRequest, err.Error())
 	}
