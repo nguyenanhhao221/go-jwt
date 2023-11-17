@@ -28,10 +28,12 @@ type PostgresStore struct {
 }
 
 func NewPostgresStore() (*PostgresStore, error) {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatalf("Error while loading env %v", err)
-		return nil, err
+	if _, exist := os.LookupEnv("RAILWAY_ENVIRONMENT"); !exist {
+		err := godotenv.Load()
+		if err != nil {
+			log.Fatalf("Error while loading env %v", err)
+			return nil, err
+		}
 	}
 
 	// The URL in .env to connect to SQL database
