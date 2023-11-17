@@ -14,17 +14,17 @@ type Account struct {
 	Number    int64     `json:"number"`
 	Balance   int64     `json:"balance"`
 	CreatedAt time.Time `json:"createdAt"`
-	Username  string    `json:"username"`
+	Email     string    `json:"email"`
 	Password  string    `json:"password"`
 }
 
-func NewAccount(firstName, lastName, username, password string) *Account {
+func NewAccount(firstName, lastName, email, password string) *Account {
 	id := uuid.New()
 	return &Account{
 		ID:        id,
 		FirstName: firstName,
 		LastName:  lastName,
-		Username:  username,
+		Email:     email,
 		Password:  password,
 		Number:    int64(rand.Intn(1000000)),
 		Balance:   0,
@@ -35,6 +35,6 @@ func NewAccount(firstName, lastName, username, password string) *Account {
 type CreateAccountRequest struct {
 	FirstName string `json:"firstName" validate:"required,min=1,max=50"`
 	LastName  string `json:"lastName" validate:"required,min=1,max=50"`
-	Username  string `json:"username" validate:"required"`
+	Email     string `json:"email" validate:"required,email"`
 	Password  string `json:"password" validate:"required"`
 }

@@ -29,7 +29,12 @@ func TestAccountCI(t *testing.T) {
 	var createAccountResponse struct {
 		ID uuid.UUID `json:"id"`
 	}
-	mockUser := &CreateAccountRequest{FirstName: "Test User First Name", LastName: "Test User Last Name"}
+	mockUser := &CreateAccountRequest{
+		FirstName: "Test User First Name",
+		LastName:  "Test User Last Name",
+		Email:     "Test@email.com",
+		Password:  "TestPassword",
+	}
 
 	t.Run("CreateAccount", func(t *testing.T) {
 		createcAccReqBody := mockUser
@@ -81,7 +86,7 @@ func TestAccountCI(t *testing.T) {
 		rr := httptest.NewRecorder()
 		handler.ServeHTTP(rr, req)
 
-		expectHttpStatus := http.StatusFound
+		expectHttpStatus := http.StatusOK
 		if rr.Code != expectHttpStatus {
 			t.Errorf("expected status code %d but got %d", expectHttpStatus, rr.Code)
 		}
@@ -99,7 +104,7 @@ func TestAccountCI(t *testing.T) {
 		}
 
 		if cmp.Equal(expectCreatedUser, responseUser, cmpopts.IgnoreFields(Account{}, "CreatedAt")) == false {
-			t.Errorf("expected create user %v but got %v", expectCreatedUser, &responseUser)
+			t.Errorf("expected create user %v but got %v", expectCreatedUser, responseUser)
 		}
 	})
 	t.Run("UpdateTestAccount", func(t *testing.T) {
@@ -139,7 +144,7 @@ func TestAccountCI(t *testing.T) {
 		getAccRecorder := httptest.NewRecorder()
 		handler.ServeHTTP(getAccRecorder, getAccountReq)
 
-		expectGetHttpStatus := http.StatusFound
+		expectGetHttpStatus := http.StatusOK
 		if getAccRecorder.Code != expectGetHttpStatus {
 			t.Errorf("expected status code %d but got %d", expectGetHttpStatus, getAccRecorder.Code)
 		}

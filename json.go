@@ -24,4 +24,5 @@ func WriteErrorJson(w http.ResponseWriter, statusCode int, msg string) {
 		Error string `json:"error"`
 	}
 	WriteJSON(w, statusCode, ApiError{Error: msg})
+	return
 }

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"os"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
@@ -14,10 +15,10 @@ import (
 
 type Storage interface {
 	createAccountTable() error
-	GetAllAccounts() ([]Account, error)
+	GetAllAccounts() ([]AccountResponse, error)
 	CreateAccount(*Account) (uuid.UUID, error)
-	GetAccountById(accountId uuid.UUID) (*Account, error)
-	GetAccountByUsername(username string) (*Account, error)
+	GetAccountById(accountId uuid.UUID) (*AccountResponse, error)
+	GetAccountByEmail(email string) (*Account, error)
 	DeleteAccountById(accountId uuid.UUID) error
 	UpdateAccountById(updateAccount *Account, accountId uuid.UUID) error
 }
@@ -59,9 +60,10 @@ func NewPostgresStore() (*PostgresStore, error) {
 	}, nil
 }
 
-func (s *PostgresStore) GetAllAccounts() ([]Account, error) {
+func (s *PostgresStore) GetAllAccounts() ([]AccountResponse, error) {
 	query := `
-	SELECT * from ACCOUNT 
+	SELECT id, first_name, last_name, email, number, balance, created_at
+	FROM account
 	`
 	rows, err := s.db.Query(query)
 	if err != nil {
@@ -69,13 +71,14 @@ func (s *PostgresStore) GetAllAccounts() ([]Account, error) {
 	}
 	defer rows.Close()
 
-	var allAccounts []Account
+	var allAccounts []AccountResponse
 	for rows.Next() {
-		var account Account
+		var account AccountResponse
 		if err := rows.Scan(
 			&account.ID,
 			&account.FirstName,
 			&account.LastName,
+			&account.Email,
 			&account.Number,
 			&account.Balance,
 			&account.CreatedAt,
@@ -101,7 +104,7 @@ func (s *PostgresStore) createAccountTable() error {
 	id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
 	first_name VARCHAR(50),
 	last_name VARCHAR(50),
-	username VARCHAR(255) NOT NULL,
+	email VARCHAR(255) NOT NULL,
 	password BYTEA NOT NULL,
 	number INTEGER,
 	balance INTEGER,
@@ -111,13 +114,24 @@ func (s *PostgresStore) createAccountTable() error {
 	return err
 }
 
-func (s *PostgresStore) GetAccountById(accountId uuid.UUID) (*Account, error) {
+// AccountResponse Use this if we don't want to include the username and password
+type AccountResponse struct {
+	ID        uuid.UUID `json:"id"`
+	FirstName string    `json:"firstName"`
+	LastName  string    `json:"lastName"`
+	Email     string    `json:"email"`
+	Number    int64     `json:"number"`
+	Balance   int64     `json:"balance"`
+	CreatedAt time.Time `json:"createdAt"`
+}
+
+func (s *PostgresStore) GetAccountById(accountId uuid.UUID) (*AccountResponse, error) {
 	query := `
-	SELECT *
+	SELECT id, first_name, last_name, number, balance, created_at
 	FROM account
 	WHERE id = $1 
 	`
-	var account Account
+	var account AccountResponse
 	row := s.db.QueryRow(query, accountId)
 	err := row.Scan(
 		&account.ID,
@@ -133,19 +147,19 @@ func (s *PostgresStore) GetAccountById(accountId uuid.UUID) (*Account, error) {
 	return &account, nil
 }
 
-func (s *PostgresStore) GetAccountByUsername(username string) (*Account, error) {
+func (s *PostgresStore) GetAccountByEmail(email string) (*Account, error) {
 	query := `
 	SELECT *
 	FROM account
-	WHERE username = $1 
+	WHERE email = $1 
 	`
 	var account Account
-	row := s.db.QueryRow(query, username)
+	row := s.db.QueryRow(query, email)
 	err := row.Scan(
 		&account.ID,
 		&account.FirstName,
 		&account.LastName,
-		&account.Username,
+		&account.Email,
 		&account.Password,
 		&account.Number,
 		&account.Balance,
@@ -173,7 +187,7 @@ func (s *PostgresStore) DeleteAccountById(accountId uuid.UUID) error {
 // CreateAccount Create account in the database, also handle hashing the password
 func (s *PostgresStore) CreateAccount(newAccount *Account) (uuid.UUID, error) {
 	query := `
-	INSERT INTO ACCOUNT (first_name, last_name, number, balance, created_at, username, password)
+	INSERT INTO ACCOUNT (first_name, last_name, number, balance, created_at, email, password)
 	VALUES ($1, $2, $3, $4, $5, $6, $7)
 	RETURNING ID
 	`
@@ -189,7 +203,7 @@ func (s *PostgresStore) CreateAccount(newAccount *Account) (uuid.UUID, error) {
 		newAccount.Number,
 		newAccount.Balance,
 		newAccount.CreatedAt,
-		newAccount.Username, hashPassword).Scan(&id)
+		newAccount.Email, hashPassword).Scan(&id)
 	if err != nil {
 		return uuid.Nil, err
 	}

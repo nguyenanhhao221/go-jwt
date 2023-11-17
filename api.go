@@ -91,7 +91,7 @@ func (s *APIServer) handleGetAllAccount(w http.ResponseWriter, r *http.Request) 
 }
 
 func (s *APIServer) handleAccount(w http.ResponseWriter, r *http.Request) {
-	accountId, err := uuid.Parse(chi.URLParam(r, "accountId"))
+	accountId, err := util.GetIdFromRequest(r)
 	if err != nil {
 		WriteErrorJson(w, http.StatusBadRequest, err.Error())
 	}
@@ -106,14 +106,17 @@ func (s *APIServer) handleAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	} else {
 		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
 	}
 }
 
 func (s *APIServer) handleGetAccount(w http.ResponseWriter, r *http.Request, accountId uuid.UUID) {
 	if account, err := s.store.GetAccountById(accountId); err != nil {
 		WriteErrorJson(w, http.StatusNotFound, err.Error())
+		return
 	} else {
-		WriteJSON(w, http.StatusFound, account)
+		WriteJSON(w, http.StatusOK, account)
+		return
 	}
 }
 
@@ -127,11 +130,10 @@ func (s *APIServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) 
 
 	validate := validator.New(validator.WithRequiredStructEnabled())
 	type IError struct {
-		Field string
-		Tag   string
-		Value string
+		Field string `json:"field"`
+		Tag   string `json:"tag"`
+		Value string `json:"value"`
 	}
-
 	var errors []*IError
 	if err := validate.Struct(createAccountReq); err != nil {
 		for _, err := range err.(validator.ValidationErrors) {
@@ -146,10 +148,17 @@ func (s *APIServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) 
 		WriteErrorJson(w, http.StatusBadRequest, string(errorsJSON))
 		return
 	}
-	newAccount := NewAccount(createAccountReq.FirstName, createAccountReq.LastName, createAccountReq.Username, createAccountReq.Password)
+	newAccount := NewAccount(createAccountReq.FirstName, createAccountReq.LastName, createAccountReq.Email, createAccountReq.Password)
+	if _, err := s.store.GetAccountByEmail(createAccountReq.Email); err == nil {
+		log.Printf("Error while checking account email %v", err)
+		WriteErrorJson(w, http.StatusForbidden, "Email already existed")
+		return
+
+	}
 	if id, err := s.store.CreateAccount(newAccount); err != nil {
 		log.Printf("Error while creating account %v", err)
 		WriteErrorJson(w, http.StatusInternalServerError, err.Error())
+		return
 	} else {
 		type createAccountRes struct {
 			ID uuid.UUID `json:"id"`
@@ -186,7 +195,7 @@ func (s *APIServer) handleDeleteAccount(w http.ResponseWriter, r *http.Request, 
 
 func (s *APIServer) handleSignIn(w http.ResponseWriter, r *http.Request) {
 	type SignInReqBody struct {
-		Username string `json:"username" validate:"required"`
+		Email    string `json:"email" validate:"required,email"`
 		Password string `json:"password" validate:"required"`
 	}
 	signInReqBody := new(SignInReqBody)
@@ -195,13 +204,13 @@ func (s *APIServer) handleSignIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if account, err := s.store.GetAccountByUsername(signInReqBody.Username); err != nil {
+	if account, err := s.store.GetAccountByEmail(signInReqBody.Email); err != nil {
 		WriteErrorJson(w, http.StatusInternalServerError, err.Error())
 		return
 	} else {
 		isPasswordMatch := util.CheckPasswordHash(signInReqBody.Password, account.Password)
 		if !isPasswordMatch {
-			WriteErrorJson(w, http.StatusUnauthorized, "Wrong username or password")
+			WriteErrorJson(w, http.StatusUnauthorized, "Wrong email or password")
 			return
 		}
 		if jwtToken, err := auth.CreateJWT(account.ID); err != nil {
