@@ -28,6 +28,9 @@ type PostgresStore struct {
 }
 
 func NewPostgresStore() (*PostgresStore, error) {
+	// NOTE: As this app is being deploy with railway, we need to handle this.
+	// Since railway doens't create a .env file when deploy, but the gotdotenv library expects this file.
+	// Without this check gotdotenv will cause the app to Fatal when run deploy
 	if _, exist := os.LookupEnv("RAILWAY_ENVIRONMENT"); !exist {
 		err := godotenv.Load()
 		if err != nil {
