@@ -30,7 +30,7 @@ type PostgresStore struct {
 func NewPostgresStore() (*PostgresStore, error) {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error while loading env")
+		log.Fatalf("Error while loading env %v", err)
 		return nil, err
 	}
 
