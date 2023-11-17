@@ -25,13 +25,19 @@ func ValidateJWT(tokenString string) (*jwt.Token, error) {
 	})
 }
 
+type CustomJWTClaims struct {
+	ID uuid.UUID `json:"id"`
+	jwt.StandardClaims
+}
+
 func CreateJWT(accountId uuid.UUID) (string, error) {
 	// Create a new token object, specifying signing method and the claims
 	// you would like it to contain.
 	// TODO: Expire time
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"accountId": accountId,
-	})
+	claims := CustomJWTClaims{
+		ID: accountId,
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	// Sign and get the complete encoded token as a string using the secret
 	hmacSecret := os.Getenv("JWT_SECRET")
@@ -47,3 +53,15 @@ func CreateJWT(accountId uuid.UUID) (string, error) {
 		return tokenString, nil
 	}
 }
+
+// func GetUserIDFromJWT(tokenString string) (uuid.UUID, error) {
+// 	if token, err := jwt.ParseWithClaims(tokenString); err != nil {
+// 		return uuid.Nil, err
+// 	}
+// 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+// 		fmt.Println(claims["foo"], claims["nbf"])
+// 	} else {
+// 		fmt.Println(err)
+// 	}
+// 	return "11231y239812749812749817kjbdwiugfiuwegfiuwe", nil
+// }

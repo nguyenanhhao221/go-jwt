@@ -15,7 +15,7 @@ import (
 
 type Storage interface {
 	createAccountTable() error
-	GetAllAccounts() ([]Account, error)
+	GetAllAccounts() ([]AccountResponse, error)
 	CreateAccount(*Account) (uuid.UUID, error)
 	GetAccountById(accountId uuid.UUID) (*AccountResponse, error)
 	GetAccountByEmail(email string) (*Account, error)
@@ -60,9 +60,10 @@ func NewPostgresStore() (*PostgresStore, error) {
 	}, nil
 }
 
-func (s *PostgresStore) GetAllAccounts() ([]Account, error) {
+func (s *PostgresStore) GetAllAccounts() ([]AccountResponse, error) {
 	query := `
-	SELECT * from ACCOUNT 
+	SELECT id, first_name, last_name, email, number, balance, created_at
+	FROM account
 	`
 	rows, err := s.db.Query(query)
 	if err != nil {
@@ -70,13 +71,14 @@ func (s *PostgresStore) GetAllAccounts() ([]Account, error) {
 	}
 	defer rows.Close()
 
-	var allAccounts []Account
+	var allAccounts []AccountResponse
 	for rows.Next() {
-		var account Account
+		var account AccountResponse
 		if err := rows.Scan(
 			&account.ID,
 			&account.FirstName,
 			&account.LastName,
+			&account.Email,
 			&account.Number,
 			&account.Balance,
 			&account.CreatedAt,
@@ -117,6 +119,7 @@ type AccountResponse struct {
 	ID        uuid.UUID `json:"id"`
 	FirstName string    `json:"firstName"`
 	LastName  string    `json:"lastName"`
+	Email     string    `json:"email"`
 	Number    int64     `json:"number"`
 	Balance   int64     `json:"balance"`
 	CreatedAt time.Time `json:"createdAt"`
