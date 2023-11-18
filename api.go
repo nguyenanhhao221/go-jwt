@@ -30,7 +30,7 @@ func NewAPIServer(listenAdd string, store Storage) *APIServer {
 
 func (s *APIServer) Run() {
 	// start a router
-	log.Panicln("Starting to run server")
+	log.Println("Starting to run server")
 	router := chi.NewRouter()
 
 	// Allow cors
