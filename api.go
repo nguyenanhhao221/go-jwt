@@ -30,6 +30,7 @@ func NewAPIServer(listenAdd string, store Storage) *APIServer {
 
 func (s *APIServer) Run() {
 	// start a router
+	log.Panicln("Starting to run server")
 	router := chi.NewRouter()
 
 	// Allow cors
@@ -47,6 +48,9 @@ func (s *APIServer) Run() {
 	router.Use(middleware.RealIP)
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
+	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		WriteJSON(w, 200, "Hello World")
+	})
 	// Add router handler for v1
 	v1Router := chi.NewRouter()
 
