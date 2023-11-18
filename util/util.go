@@ -32,8 +32,8 @@ func GetIdFromRequest(r *http.Request) (uuid.UUID, error) {
 // Determine the host name to expose our app on local and Railway deploy
 func GetHostString(portAsString string) string {
 	if _, exist := os.LookupEnv("RAILWAY_ENVIRONMENT"); !exist {
-		return "0.0.0.0:" + portAsString
-	} else {
 		return ":" + portAsString
+	} else {
+		return "0.0.0.0:" + portAsString
 	}
 }
