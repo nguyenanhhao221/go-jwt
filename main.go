@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/nguyenanhhao221/go-jwt/settings"
+	"github.com/nguyenanhhao221/go-jwt/util"
 )
 
 func main() {
@@ -16,7 +17,7 @@ func main() {
 	if err := store.Init(); err != nil {
 		log.Fatal(err)
 	}
-	portAsString := strconv.Itoa(settings.AppSettings.PORT)
+	portAsString := util.GetHostString(strconv.Itoa(settings.AppSettings.PORT))
 	apiSrv := NewAPIServer(portAsString, store)
 	apiSrv.Run()
 }

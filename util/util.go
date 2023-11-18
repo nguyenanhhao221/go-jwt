@@ -3,6 +3,7 @@ package util
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -25,5 +26,14 @@ func GetIdFromRequest(r *http.Request) (uuid.UUID, error) {
 		return uuid.Nil, err
 	} else {
 		return accountId, nil
+	}
+}
+
+// Determine the host name to expose our app on local and Railway deploy
+func GetHostString(portAsString string) string {
+	if _, exist := os.LookupEnv("RAILWAY_ENVIRONMENT"); !exist {
+		return "0.0.0.0:" + portAsString
+	} else {
+		return ":" + portAsString
 	}
 }

@@ -65,7 +65,7 @@ func (s *APIServer) Run() {
 
 	// Start the server
 	server := &http.Server{
-		Addr:    ":" + s.listenAdd,
+		Addr:    s.listenAdd,
 		Handler: router,
 	}
 	log.Printf("Server is listening on port %v", s.listenAdd)
