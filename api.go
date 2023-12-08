@@ -59,11 +59,11 @@ func (s *APIServer) Run() {
 
 	// Handlers
 	v1Router.Get(settings.AppSettings.Check_Health, s.handlerReadiness)
-	v1Router.Get(settings.AppSettings.Account_Route, withJWTAuth(s.handleAccount))
+	v1Router.Post(settings.AppSettings.Create_Account_Route, s.handleCreateAccount)
+	v1Router.Get(settings.AppSettings.Account_Route, s.handleAccount)
 	v1Router.Get(settings.AppSettings.All_Account_Route, s.handleGetAllAccount)
 	v1Router.Put(settings.AppSettings.Account_Route, s.handleAccount)
 	v1Router.Delete(settings.AppSettings.Account_Route, s.handleAccount)
-	v1Router.Post(settings.AppSettings.Create_Account_Route, s.handleCreateAccount)
 	v1Router.Post(settings.AppSettings.SignIn_Account_Route, s.handleSignIn)
 	v1Router.Post(settings.AppSettings.Transfer_Route, withJWTAuth(s.handleTransfer))
 
